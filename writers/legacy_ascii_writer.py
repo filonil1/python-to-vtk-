@@ -1,11 +1,10 @@
 """
 Реализация писателя для VTK Legacy ASCII формата.
-Наследуется от BaseVTKWriter и реализует запись в простой текстовый формат.
+Наследуется от BaseVTKWriter и реализует запись в текстовый формат.
 """
 from .base_writer import BaseVTKWriter
-from ..core.structured_grid import StructuredOrthoGrid
+from core.structured_grid import StructuredOrthoGrid
 from pathlib import Path
-from typing import List, Tuple
 
 
 class LegacyASCIIVTKWriter(BaseVTKWriter):
@@ -24,6 +23,9 @@ class LegacyASCIIVTKWriter(BaseVTKWriter):
         
         Args:
             grid: Структурированная ортогональная сетка для записи
+            
+        Raises:
+            TypeError: Если grid не является StructuredOrthoGrid
         """
         if not isinstance(grid, StructuredOrthoGrid):
             raise TypeError(
@@ -34,13 +36,6 @@ class LegacyASCIIVTKWriter(BaseVTKWriter):
     def write(self, filepath: str) -> None:
         """
         Записывает сетку в VTK файл в Legacy ASCII формате.
-        
-        Формат состоит из следующих частей:
-        1. Версия и идентификатор файла
-        2. Заголовок (до 256 символов)
-        3. Формат файла (ASCII или BINARY)
-        4. Описание сетки (DATASET STRUCTURED_POINTS)
-        5. Описание точек данных (опционально)
         
         Args:
             filepath: Путь к файлу для записи
@@ -58,13 +53,16 @@ class LegacyASCIIVTKWriter(BaseVTKWriter):
                 
                 # Часть 2: Заголовок
                 header = self._get_header()
-                self._validate_header(header)
+                if len(header) > 256:
+                    raise ValueError(
+                        f"Заголовок слишком длинный ({len(header)} > 256 символов)"
+                    )
                 f.write(f"{header}\n")
                 
                 # Часть 3: Формат файла
                 f.write(f"{self.file_format}\n")
                 
-                # Часть 4: Описание сетки (DATASET)
+                # Часть 4: Описание сетки
                 self._write_dataset(f)
                 
             print(f"✓ Файл успешно записан: {path}")
@@ -72,21 +70,6 @@ class LegacyASCIIVTKWriter(BaseVTKWriter):
             
         except IOError as e:
             raise IOError(f"Ошибка при записи файла {filepath}: {e}")
-    
-    def _validate_header(self, header: str) -> None:
-        """
-        Валидирует заголовок VTK файла.
-        
-        Args:
-            header: Заголовок для проверки
-            
-        Raises:
-            ValueError: Если заголовок слишком длинный
-        """
-        if len(header) > 256:
-            raise ValueError(
-                f"Заголовок слишком длинный ({len(header)} > 256 символов)"
-            )
     
     def _write_dataset(self, f) -> None:
         """
@@ -99,16 +82,9 @@ class LegacyASCIIVTKWriter(BaseVTKWriter):
         origin = self.grid.get_origin()
         spacing = self.grid.get_spacing()
         
-        # Ключевое слово DATASET и тип
         f.write("DATASET STRUCTURED_POINTS\n")
-        
-        # Размеры сетки
         f.write(f"DIMENSIONS {dims[0]} {dims[1]} {dims[2]}\n")
-        
-        # Начало координат
         f.write(f"ORIGIN {origin[0]} {origin[1]} {origin[2]}\n")
-        
-        # Шаги сетки (интервалы между точками)
         f.write(f"SPACING {spacing[0]} {spacing[1]} {spacing[2]}\n")
     
     def _print_write_info(self, path: Path) -> None:
@@ -139,12 +115,16 @@ class LegacyBINARYVTKWriter(BaseVTKWriter):
     """
     Писатель для VTK Legacy BINARY формата.
     
-    Записывает структурированные ортогональные сетки в бинарный формат.
-    (Заготовка для будущей реализации)
+    Заготовка для будущей реализации бинарного формата.
     """
     
     def __init__(self, grid: StructuredOrthoGrid):
-        """Инициализация Legacy BINARY писателя."""
+        """
+        Инициализация Legacy BINARY писателя.
+        
+        Args:
+            grid: Структурированная ортогональная сетка
+        """
         if not isinstance(grid, StructuredOrthoGrid):
             raise TypeError(
                 f"grid должен быть StructuredOrthoGrid, получен {type(grid)}"
