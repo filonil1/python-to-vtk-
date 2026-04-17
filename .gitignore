@@ -1,38 +1,40 @@
 ```
-# Python
+# Python cache files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-*.so
-*.egg-info/
-dist/
+
+# Build and distribution artifacts
 build/
-*.dist-info/
+dist/
+*.egg-info/
 
-# Virtual environments
-venv/
-.venv/
-env/
-.ENV/
+# Logs
+*.log
 
-# IDE
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local
+*.env.*
+
+# Coverage reports
+.coverage
+coverage/
+htmlcov/
+
+# IDE specific
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Logs
-*.log
-
-# Coverage
-.coverage
-coverage/
-htmlcov/
-
-# Environment
-.env
-.env.local
-.env.*
+# OS specific
+.DS_Store
+Thumbs.db
 ```
