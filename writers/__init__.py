@@ -1,11 +1,4 @@
-"""
-Пакет writers содержит классы для записи VTK файлов.
-"""
 from .base_writer import BaseVTKWriter
-from .legacy_ascii_writer import LegacyASCIIVTKWriter, LegacyBINARYVTKWriter
+from .legacy_ascii_writer import LegacyASCIIVTKWriter
 
-__all__ = [
-    'BaseVTKWriter',
-    'LegacyASCIIVTKWriter',
-    'LegacyBINARYVTKWriter',
-]
+__all__ = ['BaseVTKWriter', 'LegacyASCIIVTKWriter']
