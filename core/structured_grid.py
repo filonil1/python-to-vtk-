@@ -1,6 +1,5 @@
 """
 Класс для структурированной ортогональной сетки.
-Наследуется от BaseGrid и реализует регулярную сетку.
 """
 from .base_grid import BaseGrid
 from typing import Tuple, List
@@ -9,7 +8,6 @@ from typing import Tuple, List
 class StructuredOrthoGrid(BaseGrid):
     """
     Представляет регулярную ортогональную сетку в 3D пространстве.
-    Состоит из кубических ячеек.
     """
     
     def __init__(self, length_x: float, length_y: float, length_z: float,
@@ -84,6 +82,9 @@ class StructuredOrthoGrid(BaseGrid):
     def get_point_coordinates(self, i: int, j: int, k: int) -> Tuple[float, float, float]:
         """
         Возвращает координаты точки по индексам (i, j, k).
+        
+        Args:
+            i, j, k: Индексы точки (0..nx-1, 0..ny-1, 0..nz-1)
         """
         if not (0 <= i < self.nx and 0 <= j < self.ny and 0 <= k < self.nz):
             raise IndexError(f"Индексы ({i},{j},{k}) вне диапазона")
@@ -106,10 +107,10 @@ class StructuredOrthoGrid(BaseGrid):
     def get_polygons_connectivity(self) -> List[List[int]]:
         """
         Генерирует список полигонов (граней) для всех кубов.
-        Каждый куб имеет 6 граней.
+        Каждый куб имеет 6 граней. Мы возвращаем список граней.
         
-        Returns:
-            List[List[int]]: Список граней. Каждая грань: [4, id0, id1, id2, id3]
+        Формат возврата: список списков, где каждый подсписок:
+        [4, id0, id1, id2, id3] - 4 вершины грани против часовой стрелки.
         """
         polygons = []
         
@@ -130,18 +131,24 @@ class StructuredOrthoGrid(BaseGrid):
                     p6 = p4 + self.nx + 1
                     p7 = p4 + self.nx
                     
-                    # Добавляем 6 граней куба
-                    # 1. Нижняя грань
+                    # Добавляем 6 граней куба (порядок важен для нормалей)
+                    
+                    # 1. Нижняя грань (z = min) - смотрит вниз
                     polygons.append([4, p0, p3, p2, p1])
-                    # 2. Верхняя грань
+                    
+                    # 2. Верхняя грань (z = max) - смотрит вверх
                     polygons.append([4, p4, p5, p6, p7])
-                    # 3. Передняя грань
+                    
+                    # 3. Передняя грань (y = min) - смотрит на нас (если Y вперед)
                     polygons.append([4, p0, p1, p5, p4])
-                    # 4. Задняя грань
+                    
+                    # 4. Задняя грань (y = max)
                     polygons.append([4, p2, p3, p7, p6])
-                    # 5. Левая грань
+                    
+                    # 5. Левая грань (x = min)
                     polygons.append([4, p0, p4, p7, p3])
-                    # 6. Правая грань
+                    
+                    # 6. Правая грань (x = max)
                     polygons.append([4, p1, p2, p6, p5])
         
         return polygons
@@ -160,7 +167,39 @@ class StructuredOrthoGrid(BaseGrid):
             'bounds': self.get_bounds()
         }
     
+    def get_hexahedron_connectivity(self):
+        """
+        Возвращает список ячеек-гексаэдров для UNSTRUCTURED_GRID.
+        Формат: [кол-во_точек, id0, id1, ..., id7]
+        Порядок вершин VTK: 0-3 (низ), 4-7 (верх)
+        """
+        cells = []
+        nx, ny, nz = self.get_dimensions()
+        
+        for k in range(nz - 1):
+            for j in range(ny - 1):
+                for i in range(nx - 1):
+                    # Индексы 8 вершин текущего куба
+                    p0 = k * ny * nx + j * nx + i
+                    p1 = p0 + 1
+                    p2 = p0 + nx + 1
+                    p3 = p0 + nx
+                    p4 = (k + 1) * ny * nx + j * nx + i
+                    p5 = p4 + 1
+                    p6 = p4 + nx + 1
+                    p7 = p4 + nx
+                    
+                    # 8 точек + 1 число размера = 9 чисел в строке
+                    cells.append([8, p0, p1, p2, p3, p4, p5, p6, p7])
+        return cells
+    
     def __repr__(self) -> str:
         dims = self.get_dimensions()
-        cells = self.get_number_of_cells()
-        return f"StructuredOrthoGrid('{self.name}', dims={dims}, cells={cells})"
+        divs = (self.divisions_x, self.divisions_y, self.divisions_z)
+        return (f"StructuredOrthoGrid '{self.name}':\n"
+                f"  Размеры (точек): {dims}\n"
+                f"  Разбиения (ячеек): {divs}\n"
+                f"  Шаги: {self.spacing}\n"
+                f"  Начало: {self.origin}\n"
+                f"  Точек: {self.get_number_of_points()}\n"
+                f"  Ячеек: {self.get_number_of_cells()}")
